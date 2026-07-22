@@ -10,8 +10,6 @@
   <h1>🏡 GRANDCADDY</h1>
   <p><em>Empowering Seniors. Enabling Independence. Enriching Lives.</em></p>
   <br>
-  <img src="https://via.placeholder.com/800x400/2C3E50/FFFFFF?text=GrandCaddy+-+Coming+Soon" alt="GrandCaddy Banner" width="80%">
-  <br><br>
 </div>
 
 ---
