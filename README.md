@@ -111,6 +111,7 @@ To transform the lives of every senior citizen in Kuils River and beyond by prov
 
 ## 📁 **Project Structure**
 
+```
 GrandCaddy/
 ├── 📄 docs/
 │ ├── PRP_Logbook.docx
@@ -123,7 +124,7 @@ GrandCaddy/
 ├── 📊 research/
 │ └── survey_data/
 └── 📝 README.md
-
+```
 
 ---
 
