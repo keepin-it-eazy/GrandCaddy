@@ -78,4 +78,20 @@ To transform the lives of every senior citizen in Kuils River and beyond by prov
 | 🚀 **Launch** | ⏳ Planned | ░░░░░░░░░░░░░░░░░░░░ 0% |
 
 
+## 🎯 Roadmap
 
+☑ Market research & validation
+☑ MVP survey completion
+□ Website development
+□ Helper verification system
+□ Phone support setup
+□ Soft launch (Kuils River)
+□ Community outreach program
+□ Full launch & expansion
+
+## 📬 Contact
+
+- Website: [Coming Soon]
+- Email: [Coming Soon]
+- Phone: [Coming Soon]
+<p align="center"> <sub>Built with ❤️ for the seniors of Kuils River</sub> <br> <sub>© 2026 GrandCaddy. All rights reserved.</sub> </p><hr><p align="center"> <b>⭐ If you like this project, give it a star! ⭐</b> </p> ```
