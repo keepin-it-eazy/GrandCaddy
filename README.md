@@ -164,5 +164,6 @@ npm start
 - Website: [Coming Soon]
 - Email: [Coming Soon]
 - Phone: [Coming Soon]
-<p align="center"> <sub>Built with ❤️ for the seniors of Kuils River</sub> <br> <sub>© 2026 GrandCaddy. All rights reserved.</sub> </p><hr><p align="center"> <b>⭐ If you like this project, give it a star! ⭐</b> </p>
 ```
+<p align="center"> <sub>Built with ❤️ for the seniors of Kuils River</sub> <br> <sub>© 2026 GrandCaddy. All rights reserved.</sub> </p><hr><p align="center"> <b>⭐ If you like this project, give it a star! ⭐</b> </p>
+
