@@ -77,6 +77,76 @@ To transform the lives of every senior citizen in Kuils River and beyond by prov
 | 💻 **Development** | 🔄 In Progress | ██████░░░░░░░░░░░░░░ 30% |
 | 🚀 **Launch** | ⏳ Planned | ░░░░░░░░░░░░░░░░░░░░ 0% |
 
+### 📈 Survey Results
+✅ 20/20 Survey Responses
+✅ 16/20 Interested Buyers
+✅ 65%+ Positive Design Rating
+✅ 100% Would Recommend
+
+
+---
+
+## 🛠️ **Tech Stack**
+
+<p align="center">
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3">
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git">
+</p>
+
+---
+
+## 👥 **Team**
+
+| Name | Role |
+|------|------|
+| **Isaac Tinotenda Ziyengwa** | Presentation & Documentation |
+| **Luke John Zyster** | Website Development |
+| **Rocco Given Visagie** | Research & Support |
+
+---
+
+## 📁 **Project Structure**
+
+GrandCaddy/
+├── 📄 docs/
+│ ├── PRP_Logbook.docx
+│ └── GrandCaddy.pptx
+├── 🎨 design/
+│ └── wireframes/
+├── 💻 src/
+│ ├── frontend/
+│ └── backend/
+├── 📊 research/
+│ └── survey_data/
+└── 📝 README.md
+
+
+---
+
+## 🚦 **Getting Started**
+
+### Prerequisites
+- Web browser (Chrome/Firefox/Safari)
+- Internet connection
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/GrandCaddy.git
+
+# Navigate to project directory
+cd GrandCaddy
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
 
 ## 🎯 Roadmap
 
@@ -94,4 +164,5 @@ To transform the lives of every senior citizen in Kuils River and beyond by prov
 - Website: [Coming Soon]
 - Email: [Coming Soon]
 - Phone: [Coming Soon]
-<p align="center"> <sub>Built with ❤️ for the seniors of Kuils River</sub> <br> <sub>© 2026 GrandCaddy. All rights reserved.</sub> </p><hr><p align="center"> <b>⭐ If you like this project, give it a star! ⭐</b> </p> ```
+<p align="center"> <sub>Built with ❤️ for the seniors of Kuils River</sub> <br> <sub>© 2026 GrandCaddy. All rights reserved.</sub> </p><hr><p align="center"> <b>⭐ If you like this project, give it a star! ⭐</b> </p>
+```
