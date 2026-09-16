@@ -54,14 +54,12 @@ export default function SignUp() {
   return (
     <main className="min-h-screen bg-[#F8F9FC]">
       <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 lg:grid-cols-2">
-
         <section className="flex items-center px-12 py-16">
           <Hero />
         </section>
 
         <section className="flex items-center justify-center px-8 py-16">
           <div className="w-full max-w-md space-y-8">
-
             <div>
               <h1 className="text-4xl font-bold">Create Your Account</h1>
               <p className="mt-2 text-gray-500">
@@ -117,7 +115,6 @@ export default function SignUp() {
                 Sign In
               </Link>
             </p>
-
           </div>
         </section>
       </div>
