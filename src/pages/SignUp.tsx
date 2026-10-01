@@ -1,4 +1,3 @@
-// src/pages/SignUp.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { User, Mail } from "lucide-react";
