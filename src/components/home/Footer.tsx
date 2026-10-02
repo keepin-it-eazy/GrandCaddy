@@ -80,15 +80,15 @@ export default function Footer() {
 
           <div className="flex gap-5">
 
-            <a href="#" aria-label="Facebook">
+            <a href="https://www.facebook.com" aria-label="Facebook" target="_blank" rel="noreferrer">
               <FaFacebook className="transition hover:text-[#0B5FFF]" />
             </a>
 
-            <a href="#" aria-label="Instagram">
+            <a href="https://www.instagram.com" aria-label="Instagram" target="_blank" rel="noreferrer">
               <FaInstagram className="transition hover:text-[#0B5FFF]" />
             </a>
 
-            <a href="#" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com" aria-label="LinkedIn" target="_blank" rel="noreferrer">
               <FaLinkedin className="transition hover:text-[#0B5FFF]" />
             </a>
 

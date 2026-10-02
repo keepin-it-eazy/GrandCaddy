@@ -40,9 +40,14 @@ export default function SignUp() {
 
     try {
       setLoading(true);
-      await signUp(email, password, fullName, role);
-      alert("Account created successfully! 🎉");
-      navigate("/");
+      const { session } = await signUp(email, password, fullName, role);
+      if (session) {
+        alert("Account created successfully! 🎉");
+        navigate(role === "helper" ? "/helper/signup" : "/");
+      } else {
+        alert("Account created. Check your email to confirm your account, then sign in.");
+        navigate("/login");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {

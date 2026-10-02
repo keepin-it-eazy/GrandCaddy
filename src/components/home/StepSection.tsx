@@ -27,7 +27,7 @@ export default function StepSection() {
   ];
 
   return (
-    <section className="bg-[#DDE2F2] py-24">
+    <section id="how-it-works" className="bg-[#DDE2F2] py-24">
       <div className="mx-auto max-w-7xl px-8">
 
         <h2 className="mb-20 text-center text-5xl font-bold text-[#20212A]">

@@ -1,12 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Mail } from "lucide-react";
-
-import Hero from "../components/Hero";
-import Input from "../components/Input";
-import PasswordInput from "../components/PasswordInput";
-import Button from "../components/Button";
-import { signIn } from "../lib/auth";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import TaskCard from "../components/TaskCard";
+import { supabase } from "../lib/supabaseClient";
+import type { Task } from "../types/task";
 
 export default function MyBookings() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,24 +22,32 @@ export default function MyBookings() {
       }
 
       const { data, error } = await supabase
-        .from("tasks")
+        .from("bookings")
         .select(
           `
           id,
-          title,
-          suburb,
-          status,
-          offered_amount,
-          created_at,
-          task_categories:category_id ( name ),
-          users:customer_id ( full_name )
+          helper_id,
+          tasks (
+            id,
+            title,
+            suburb,
+            status,
+            created_at,
+            task_categories:category_id ( name ),
+            customer:profiles!tasks_user_id_fkey ( full_name )
+          )
         `
         )
-        .eq("helper_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq("helper_id", user.id);
 
       if (error) setError(error.message);
-      else setTasks((data ?? []) as unknown as Task[]);
+      else {
+        const bookedTasks = (data ?? []).flatMap((booking) => {
+          const task = booking.tasks;
+          return Array.isArray(task) ? task : task ? [task] : [];
+        }) as unknown as Task[];
+        setTasks(bookedTasks);
+      }
       setLoading(false);
     }
 

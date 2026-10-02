@@ -7,14 +7,13 @@ export type TaskCategory = { name: string }
 export type UserRef = { full_name: string | null }
 
 export type Task = {
-  id: number
+  id: string
   title: string
   suburb: string | null
   status: TaskStatus
-  offered_amount: number | null
   created_at?: string
   task_categories?: Embedded<TaskCategory>
-  users?: Embedded<UserRef>
+  profiles?: Embedded<UserRef>
 }
 
 export type TaskDetailRecord = Task & {
@@ -22,8 +21,8 @@ export type TaskDetailRecord = Task & {
   address: string | null
   preferred_date: string | null
   preferred_time: string | null
-  category_id: number | null
-  customer_id: string
+  category_id: string | null
+  user_id: string
   helper_id: string | null
   helper?: Embedded<UserRef>
 }

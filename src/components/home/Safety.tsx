@@ -27,7 +27,7 @@ const safetyItems = [
 
 export default function Safety() {
   return (
-    <section className="bg-[#DDE2F2] py-20">
+    <section id="safety" className="bg-[#DDE2F2] py-20">
       <div className="mx-auto max-w-7xl rounded-[40px] bg-[#0B5FFF] px-12 py-16 text-white shadow-2xl">
 
         <div className="text-center">

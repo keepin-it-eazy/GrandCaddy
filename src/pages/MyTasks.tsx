@@ -1,5 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import TaskCard from "../components/TaskCard";
+import { supabase } from "../lib/supabaseClient";
+import type { Task } from "../types/task";
 
 export default function MyTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,12 +29,12 @@ export default function MyTasks() {
           title,
           suburb,
           status,
-          offered_amount,
           created_at,
-          task_categories:category_id ( name )
+          task_categories:category_id ( name ),
+          customer:profiles!tasks_user_id_fkey ( full_name )
         `
         )
-        .eq("customer_id", user.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) setError(error.message);

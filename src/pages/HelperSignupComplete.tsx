@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
-type Category = { id: number; name: string };
+type Category = { id: string; name: string };
 
 const fieldClass =
   "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[#0B5FFF] focus:outline-none focus:ring-1 focus:ring-[#0B5FFF]";
@@ -13,7 +13,7 @@ export default function HelperSignup() {
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [suburb, setSuburb] = useState("");
@@ -42,20 +42,26 @@ export default function HelperSignup() {
       }
 
       const { data: profile } = await supabase
-        .from("users")
-        .select("full_name, phone, suburb, bio, hourly_rate")
+        .from("profiles")
+        .select("full_name, phone")
         .eq("id", user.id)
+        .single();
+
+      const { data: helperProfile } = await supabase
+        .from("helper_profiles")
+        .select("suburb, bio, hourly_rate")
+        .eq("user_id", user.id)
         .single();
 
       if (profile) {
         setFullName(profile.full_name ?? "");
         setPhone(profile.phone ?? "");
-        setSuburb(profile.suburb ?? "");
-        setBio(profile.bio ?? "");
+        setSuburb(helperProfile?.suburb ?? "");
+        setBio(helperProfile?.bio ?? "");
         setHourlyRate(
-          profile.hourly_rate === null || profile.hourly_rate === undefined
+          helperProfile?.hourly_rate === null || helperProfile?.hourly_rate === undefined
             ? ""
-            : String(profile.hourly_rate)
+            : String(helperProfile.hourly_rate)
         );
       } else {
         setFullName((user.user_metadata?.full_name as string) ?? "");
@@ -67,7 +73,7 @@ export default function HelperSignup() {
     void load();
   }, []);
 
-  const toggleCategory = (id: number) => {
+  const toggleCategory = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
@@ -104,20 +110,29 @@ export default function HelperSignup() {
       return;
     }
 
-    const { error: upsertError } = await supabase.from("users").upsert({
+    const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
       full_name: fullName,
-      role: "helper",
       phone,
+    });
+
+    if (profileError) {
+      setSaving(false);
+      setError(profileError.message);
+      return;
+    }
+
+    const { error: helperProfileError } = await supabase.from("helper_profiles").upsert({
+      user_id: user.id,
       suburb,
       bio: bio || null,
       hourly_rate: rate,
       is_available: true,
     });
 
-    if (upsertError) {
+    if (helperProfileError) {
       setSaving(false);
-      setError(upsertError.message);
+      setError(helperProfileError.message);
       return;
     }
 

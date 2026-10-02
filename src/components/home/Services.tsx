@@ -6,6 +6,7 @@ import {
   Paintbrush,
   ArrowRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
   {
@@ -42,7 +43,7 @@ const services = [
 
 export default function Services() {
   return (
-    <section className="bg-[#DDE2F2] py-12">
+    <section id="services" className="bg-[#DDE2F2] py-12">
 
       <div className="mx-auto max-w-7xl rounded-[36px] bg-white p-10 shadow-lg">
 
@@ -60,10 +61,13 @@ export default function Services() {
 
           </div>
 
-          <button className="hidden items-center gap-2 font-semibold text-[#0B5FFF] md:flex">
+          <Link
+            to="/browse-tasks"
+            className="hidden items-center gap-2 font-semibold text-[#0B5FFF] md:flex"
+          >
             See all categories
             <ArrowRight size={18} />
-          </button>
+          </Link>
 
         </div>
 
@@ -73,7 +77,8 @@ export default function Services() {
             const Icon = service.icon;
 
             return (
-              <div
+              <Link
+                to="/browse-tasks"
                 key={service.title}
                 className={`
                   ${service.bg}
@@ -111,7 +116,7 @@ export default function Services() {
                   {service.title}
                 </h3>
 
-              </div>
+              </Link>
             );
           })}
 
