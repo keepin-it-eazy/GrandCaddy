@@ -1,100 +1,72 @@
+// src/components/home/Hero.tsx
 import { Link } from "react-router-dom";
-import hero from "../../assets/hero.png";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import hero from "../assets/hero.png";
 
 export default function Hero() {
   return (
-    <section className="bg-[#DDE2F2]">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-16 px-8 py-20 lg:flex-row">
+    <section className="bg-[#DDE2F2] py-16 lg:py-24">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-8 lg:grid-cols-2">
 
-        {/* Left Side */}
+        {/* LEFT — copy */}
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#0B5FFF] shadow-sm">
+            <ShieldCheck size={14} />
+            Trusted by 10,000+ families
+          </span>
 
-        <div className="flex-1">
-
-          <h1 className="text-6xl font-extrabold leading-tight text-[#20212A]">
-
-            Get Trusted Help
-
+          <h1 className="mt-6 text-5xl font-extrabold leading-[1.1] text-[#20212A] md:text-6xl">
+            Your digital
             <br />
-
-            with
-
-            <span className="text-[#0B5FFF]">
-              {" "}Everyday
-              <br />
-              Tasks
-            </span>
-
+            <span className="text-[#0B5FFF]">concierge</span>
+            <br />
+            awaits.
           </h1>
 
-          <p className="mt-8 max-w-lg text-lg leading-8 text-gray-600">
-            GrandCaddy connects seniors and busy families
-            with verified helpers for home maintenance,
-            errands, and specialized care.
+          <p className="mt-8 max-w-md text-lg leading-8 text-gray-600">
+            Professional assistance for seniors and family members,
+            delivered with empathy and modern sophistication.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-5">
-
+          <div className="mt-10 flex flex-wrap gap-3">
             <Link
-              to="/signup"
-              className="rounded-full bg-[#0B5FFF] px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
+              to="/post-task"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0B5FFF] px-6 py-3.5 font-semibold text-white transition hover:bg-blue-700"
             >
-              Post a Task for Free
+              Post a Task
+              <ArrowRight size={18} />
             </Link>
-
             <Link
-              to="/signup"
-              className="rounded-full bg-[#F6B14A] px-8 py-4 font-semibold text-white transition hover:bg-orange-500"
+              to="/browse"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3.5 font-semibold text-[#20212A] transition hover:border-gray-400"
             >
               Become a Caddy
             </Link>
-
           </div>
 
-          <div className="mt-12 flex gap-12">
-
-            <div>
-              <h2 className="text-3xl font-bold">
-                1M+
-              </h2>
-
-              <p className="text-sm uppercase tracking-wider text-gray-500">
-                Customers
-              </p>
+          <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-500">★★★★★</span>
+              <span className="font-semibold">4.9/5</span>
+              <span>from 2,400+ reviews</span>
             </div>
-
-            <div>
-              <h2 className="text-3xl font-bold">
-                4.9/5
-              </h2>
-
-              <p className="text-sm uppercase tracking-wider text-gray-500">
-                User Rating
-              </p>
-            </div>
-
           </div>
-
         </div>
 
-        {/* Right Side */}
-
-        <div className="flex flex-1 justify-center">
-
+        {/* RIGHT — hero image with badge */}
+        <div className="relative mx-auto w-full max-w-[480px]">
           <img
             src={hero}
-            alt="GrandCaddy"
-            className="
-              w-full
-              max-w-md
-              rounded-[32px]
-              border-[6px]
-              border-white
-              shadow-2xl
-            "
+            alt="A GrandCaddy helping at home"
+            className="w-full rounded-[32px] shadow-2xl"
           />
 
+          <div className="absolute -bottom-6 -right-6 flex h-32 w-32 flex-col items-center justify-center rounded-full bg-[#F6B14A] text-center text-sm font-bold text-[#20212A] shadow-xl">
+            <span className="text-xs opacity-80">TRUSTED BY</span>
+            <span className="text-xl">10K+</span>
+            <span className="text-xs opacity-80">FAMILIES</span>
+          </div>
         </div>
-
       </div>
     </section>
   );

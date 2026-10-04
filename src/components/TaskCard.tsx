@@ -1,22 +1,26 @@
+// src/components/TaskCard.tsx
 import { Link } from "react-router-dom";
 import { one, type Task, type TaskStatus } from "../types/task";
 
 const statusLabels: Record<TaskStatus, string> = {
-  open: "Open",
-  assigned: "Assigned",
-  completed: "Completed",
+    open: "Open",
+    assigned: "Assigned",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    in_progress: ""
 };
 
 export function StatusBadge({ status }: { status: TaskStatus }) {
-  const styles =
-    status === "completed"
-      ? "bg-gray-100 text-gray-600"
-      : status === "assigned"
-        ? "bg-amber-100 text-amber-700"
-        : "bg-emerald-100 text-emerald-700";
+  const styles: Record<TaskStatus, string> = {
+      open: "bg-emerald-100 text-emerald-700",
+      assigned: "bg-amber-100 text-amber-700",
+      completed: "bg-gray-100 text-gray-600",
+      cancelled: "bg-red-100 text-red-600",
+      in_progress: ""
+  };
 
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles}`}>
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[status]}`}>
       {statusLabels[status]}
     </span>
   );
@@ -31,6 +35,7 @@ export default function TaskCard({
 }) {
   const categoryName = one(task.task_categories)?.name ?? "Uncategorised";
   const customerName = one(task.customer)?.full_name ?? "Unknown";
+
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">

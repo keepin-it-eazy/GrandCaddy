@@ -49,7 +49,6 @@ export default function Navbar() {
       });
       setUnread(unreadRes.count ?? 0);
 
-      // subscribe to new incoming messages for unread badge
       if (channel) void supabase.removeChannel(channel);
       channel = supabase
         .channel(`unread-${user.id}`)
@@ -105,22 +104,29 @@ export default function Navbar() {
             <a href="#safety">Safety</a>
             <NavLink to="/browse" className={navLinkClass}>Browse tasks</NavLink>
 
+            {/* Role-based links — each shown at most once */}
             {role.isCustomer && (
-              <>
-                <NavLink to="/my-tasks" className={navLinkClass}>My tasks</NavLink>
-                <NavLink to="/my-bookings" className={navLinkClass}>My bookings</NavLink>
-              </>
+              <NavLink to="/my-tasks" className={navLinkClass}>
+                My tasks
+              </NavLink>
+            )}
+
+            {(role.isCustomer || role.isHelper) && (
+              <NavLink to="/my-bookings" className={navLinkClass}>
+                My bookings
+              </NavLink>
             )}
 
             {role.isHelper && (
-              <>
-                <NavLink to="/helper" className={navLinkClass}>Dashboard</NavLink>
-                <NavLink to="/my-bookings" className={navLinkClass}>My bookings</NavLink>
-              </>
+              <NavLink to="/helper" className={navLinkClass}>
+                Dashboard
+              </NavLink>
             )}
 
             {role.signedIn && !role.isHelper && (
-              <NavLink to="/helper/signup" className={navLinkClass}>Become a Caddy</NavLink>
+              <NavLink to="/helper/signup" className={navLinkClass}>
+                Become a Caddy
+              </NavLink>
             )}
           </nav>
         </div>

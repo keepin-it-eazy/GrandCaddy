@@ -24,10 +24,7 @@ function AcceptButton({ taskId }: { taskId: number }) {
     setError(null);
     const { error } = await supabase.rpc("accept_task", { p_task_id: taskId });
     setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
+    if (error) return setError(error.message);
     navigate("/helper");
   };
 
@@ -56,10 +53,7 @@ function CompleteButton({ taskId }: { taskId: number }) {
     setError(null);
     const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
     setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
+    if (error) return setError(error.message);
     navigate(0);
   };
 
@@ -73,6 +67,59 @@ function CompleteButton({ taskId }: { taskId: number }) {
         {loading ? "Completing…" : "Mark as completed"}
       </button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function OwnerActions({
+  taskId,
+  status,
+  onCancelled,
+}: {
+  taskId: number;
+  status: string;
+  onCancelled: () => void;
+}) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCancel = async () => {
+    if (!confirm("Cancel this task? This cannot be undone.")) return;
+    setBusy(true);
+    setError(null);
+    const { error } = await supabase.rpc("cancel_task", { p_task_id: taskId });
+    setBusy(false);
+    if (error) return setError(error.message);
+    onCancelled();
+    navigate("/my-tasks");
+  };
+
+  const canEdit = status === "open";
+  const canCancel = status === "open" || status === "assigned";
+
+  if (!canEdit && !canCancel) return null;
+
+  return (
+    <div className="mt-6 flex flex-wrap gap-3">
+      {canEdit && (
+        <Link
+          to={`/my-tasks`}
+          className="flex-1 rounded-xl border border-gray-300 bg-white py-3 text-center font-semibold text-gray-700"
+        >
+          Edit in My Tasks
+        </Link>
+      )}
+      {canCancel && (
+        <button
+          onClick={() => void handleCancel()}
+          disabled={busy}
+          className="flex-1 rounded-xl border border-red-300 bg-white py-3 font-semibold text-red-600 disabled:opacity-60"
+        >
+          {busy ? "Cancelling…" : "Cancel task"}
+        </button>
+      )}
+      {error && <p className="w-full text-sm text-red-600">{error}</p>}
     </div>
   );
 }
@@ -94,13 +141,8 @@ function ReviewForm({
   const submit = async () => {
     setSaving(true);
     setError(null);
-
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setSaving(false);
-      setError("Session expired. Sign in again.");
-      return;
-    }
+    if (!user) { setSaving(false); return setError("Session expired."); }
 
     const { error } = await supabase.from("reviews").insert({
       reviewer_id: user.id,
@@ -109,15 +151,10 @@ function ReviewForm({
       rating,
       comment: comment.trim() || null,
     });
-
     setSaving(false);
 
     if (error) {
-      if (error.code === "23505") {
-        setError("You've already reviewed this task.");
-      } else {
-        setError(error.message);
-      }
+      setError(error.code === "23505" ? "You've already reviewed this task." : error.message);
       return;
     }
     onSubmitted();
@@ -138,11 +175,7 @@ function ReviewForm({
               key={n}
               type="button"
               onClick={() => setRating(n)}
-              className={
-                n <= rating
-                  ? "text-2xl text-yellow-500"
-                  : "text-2xl text-gray-300 hover:text-yellow-400"
-              }
+              className={n <= rating ? "text-2xl text-yellow-500" : "text-2xl text-gray-300 hover:text-yellow-400"}
               aria-label={`${n} star${n > 1 ? "s" : ""}`}
             >
               ★
@@ -196,11 +229,7 @@ export default function TaskDetail() {
 
   useEffect(() => {
     async function fetchTask() {
-      if (!id) {
-        setError("No task id in the URL.");
-        setLoading(false);
-        return;
-      }
+      if (!id) { setError("No task id in the URL."); setLoading(false); return; }
 
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -216,38 +245,22 @@ export default function TaskDetail() {
 
       const { data, error } = await supabase
         .from("tasks")
-        .select(
-          `
-          id,
-          title,
-          description,
-          address,
-          suburb,
-          status,
-          preferred_date,
-          preferred_time,
-          created_at,
-          category_id,
-          user_id,
-          helper_id,
+        .select(`
+          id, title, description, address, suburb, status,
+          preferred_date, preferred_time, created_at,
+          category_id, user_id, helper_id, budget, urgency,
           task_categories:category_id ( name ),
           customer:profiles!tasks_user_id_fkey ( full_name ),
           helper:profiles!tasks_helper_id_fkey   ( full_name )
-        `
-        )
+        `)
         .eq("id", id)
         .single();
 
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
+      if (error) { setError(error.message); setLoading(false); return; }
 
       setTask(data as unknown as TaskDetailRecord);
       if (user && data && (data as any).user_id === user.id) setIsOwner(true);
 
-      // has this user already reviewed this task?
       if (user) {
         const { data: r } = await supabase
           .from("reviews")
@@ -260,7 +273,6 @@ export default function TaskDetail() {
 
       setLoading(false);
     }
-
     void fetchTask();
   }, [id]);
 
@@ -293,31 +305,13 @@ export default function TaskDetail() {
   const customerName = one(task.customer)?.full_name ?? "Unknown";
   const helperName = one(task.helper)?.full_name ?? null;
 
-  const when = [task.preferred_date, task.preferred_time]
-    .filter(Boolean)
-    .join(" at ");
+  const when = [task.preferred_date, task.preferred_time].filter(Boolean).join(" at ");
 
   const canAccept = isHelper && task.status === "open" && !isOwner;
-
-  const isAssignedHelper =
-    isHelper &&
-    currentUserId !== null &&
-    task.helper_id === currentUserId;
-
-  const canComplete =
-    isAssignedHelper &&
-    task.status !== "completed";
-
-  const canReview =
-    isOwner &&
-    task.status === "completed" &&
-    !!task.helper_id &&
-    !existingReview;
-
-  const alreadyReviewed =
-    isOwner &&
-    task.status === "completed" &&
-    existingReview;
+  const isAssignedHelper = isHelper && currentUserId !== null && task.helper_id === currentUserId;
+  const canComplete = isAssignedHelper && task.status !== "completed" && task.status !== "cancelled";
+  const canReview = isOwner && task.status === "completed" && !!task.helper_id && !existingReview;
+  const alreadyReviewed = isOwner && task.status === "completed" && existingReview;
 
   return (
     <main className="min-h-screen bg-[#F8F9FC] px-6 py-12">
@@ -346,21 +340,22 @@ export default function TaskDetail() {
             <Row label="Suburb" value={task.suburb ?? "—"} />
             <Row label="Address" value={task.address ?? "—"} />
             <Row label="Preferred time" value={when || "Flexible"} />
+            <Row
+              label="Budget"
+              value={task.budget != null ? `R${Number(task.budget).toLocaleString()}` : "—"}
+            />
 
             <div className="flex justify-between gap-6 border-b border-gray-100 py-3 last:border-0">
               <dt className="text-gray-500">Caddy</dt>
               <dd className="text-right font-medium text-gray-900">
                 {task.helper_id ? (
-                  <Link
-                    to={`/helpers/${task.helper_id}`}
-                    className="text-[#0B5FFF] hover:underline"
-                  >
+                  <Link to={`/helpers/${task.helper_id}`} className="text-[#0B5FFF] hover:underline">
                     {helperName ?? "View helper"} →
                   </Link>
                 ) : task.status === "open" ? (
                   "Not assigned yet"
                 ) : (
-                  "Unknown"
+                  "—"
                 )}
               </dd>
             </div>
@@ -368,6 +363,7 @@ export default function TaskDetail() {
 
           {canAccept && <AcceptButton taskId={Number(task.id)} />}
           {canComplete && <CompleteButton taskId={Number(task.id)} />}
+          {isOwner && <OwnerActions taskId={Number(task.id)} status={task.status} onCancelled={() => setTask({ ...task, status: "cancelled" })} />}
 
           {!isHelper && task.status === "open" && !isOwner && (
             <div className="mt-6">
@@ -381,7 +377,6 @@ export default function TaskDetail() {
           )}
         </div>
 
-        {/* Review form — only for the owner, only once, only when completed */}
         {canReview && task.helper_id && (
           <ReviewForm
             taskId={Number(task.id)}

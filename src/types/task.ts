@@ -1,6 +1,6 @@
 // src/types/task.ts
 
-export type TaskStatus = "open" | "assigned" | "completed";
+export type TaskStatus = "open" | "assigned" | "in_progress" | "completed" | "cancelled";
 export type TaskUrgency = "flexible" | "today" | "urgent";
 export type TimeSlot = "morning" | "afternoon" | "evening";
 
@@ -29,7 +29,6 @@ export type TaskDetailRecord = Task & {
   category_id: string | null;
   user_id: string;
   helper_id: string | null;
-  // NEW from this migration
   urgency: TaskUrgency;
   photos: string[];
   is_recurring: boolean;
