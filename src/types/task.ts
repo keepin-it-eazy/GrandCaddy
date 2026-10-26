@@ -34,6 +34,9 @@ export type TaskDetailRecord = Task & {
   is_recurring: boolean;
   recurrence_note: string | null;
   budget: number | null;
+  confirmation_code?: string | null;
+  validation_code_confirmed_by_customer?: boolean | null;
+  validation_code_confirmed_at?: string | null;
 };
 
 export function one<T>(value: Embedded<T> | undefined): T | null {

@@ -15,18 +15,24 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AcceptButton({ taskId }: { taskId: number }) {
-  const navigate = useNavigate();
+function AcceptButton({ taskId, onAccepted }: { taskId: number; onAccepted?: (code: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handle = async () => {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.rpc("accept_task", { p_task_id: taskId });
+    const { error: acceptError } = await supabase.rpc("accept_task", { p_task_id: taskId });
+    if (acceptError) {
+      setLoading(false);
+      return setError(acceptError.message);
+    }
+
+    const { data, error: codeError } = await supabase.rpc("issue_task_validation_code", { p_task_id: taskId });
     setLoading(false);
-    if (error) return setError(error.message);
-    navigate("/helper");
+
+    if (codeError || !data) return setError(codeError?.message ?? "Could not issue the validation code.");
+    onAccepted?.(String(data));
   };
 
   return (
@@ -227,6 +233,10 @@ export default function TaskDetail() {
   const [isOwner, setIsOwner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [existingReview, setExistingReview] = useState(false);
+  const [generatedValidationCode, setGeneratedValidationCode] = useState<string | null>(null);
+  const [validationInput, setValidationInput] = useState("");
+  const [validatingCode, setValidatingCode] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTask() {
@@ -250,6 +260,7 @@ export default function TaskDetail() {
           id, title, description, address, suburb, status,
           preferred_date, preferred_time, created_at,
           category_id, user_id, helper_id, budget, urgency,
+          confirmation_code, validation_code_confirmed_by_customer, validation_code_confirmed_at,
           task_categories:category_id ( name ),
           customer:profiles!tasks_user_id_fkey ( full_name ),
           helper:profiles!tasks_helper_id_fkey   ( full_name )
@@ -310,9 +321,40 @@ export default function TaskDetail() {
 
   const canAccept = isHelper && task.status === "open" && !isOwner;
   const isAssignedHelper = isHelper && currentUserId !== null && task.helper_id === currentUserId;
+  const isCustomerOwner = currentUserId !== null && task.user_id === currentUserId;
   const canComplete = isAssignedHelper && task.status !== "completed" && task.status !== "cancelled";
   const canReview = isOwner && task.status === "completed" && !!task.helper_id && !existingReview;
   const alreadyReviewed = isOwner && task.status === "completed" && existingReview;
+  const validationCode = generatedValidationCode ?? task.confirmation_code ?? null;
+
+  const handleValidateCode = async () => {
+    if (!task.helper_id || !task.confirmation_code) return;
+    if (validationInput.trim() !== task.confirmation_code) {
+      setValidationError("That code does not match.");
+      return;
+    }
+
+    setValidatingCode(true);
+    setValidationError(null);
+    const { data, error } = await supabase.rpc("confirm_task_validation", {
+      p_task_id: Number(task.id),
+      p_code: validationInput.trim(),
+    });
+    setValidatingCode(false);
+
+    if (error || !data) {
+      setValidationError(error?.message ?? "The validation code could not be confirmed.");
+      return;
+    }
+
+    setTask({
+      ...task,
+      status: "in_progress",
+      validation_code_confirmed_by_customer: true,
+      validation_code_confirmed_at: new Date().toISOString(),
+    });
+    setValidationInput("");
+  };
 
   return (
     <main className="min-h-screen bg-[#F8F9FC] px-6 py-12">
@@ -362,7 +404,15 @@ export default function TaskDetail() {
             </div>
           </dl>
 
-          {canAccept && <AcceptButton taskId={Number(task.id)} />}
+          {canAccept && (
+            <AcceptButton
+              taskId={Number(task.id)}
+              onAccepted={(code) => {
+                setGeneratedValidationCode(code);
+                setTask({ ...task, status: "assigned" });
+              }}
+            />
+          )}
           {canComplete && <CompleteButton taskId={Number(task.id)} />}
           {isOwner && <OwnerActions taskId={Number(task.id)} status={task.status} onCancelled={() => setTask({ ...task, status: "cancelled" })} />}
 
@@ -377,6 +427,45 @@ export default function TaskDetail() {
             </div>
           )}
         </div>
+
+        {isAssignedHelper && validationCode && (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">Validation code</p>
+            <p className="mt-3 text-4xl font-black tracking-[0.4em] text-amber-900">{validationCode}</p>
+            <p className="mt-2 text-sm text-amber-800">
+              Share this code with the customer when you arrive. They need to enter it to confirm the visit.
+            </p>
+          </div>
+        )}
+
+        {isCustomerOwner && task.helper_id && task.status === "assigned" && (
+          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Confirm helper validation</h3>
+            <p className="mt-1 text-sm text-gray-500">Enter the 6-digit code the helper gave you.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={validationInput}
+                onChange={(event) => setValidationInput(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                maxLength={6}
+                inputMode="numeric"
+                placeholder="123456"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-[#0B5FFF] focus:outline-none focus:ring-1 focus:ring-[#0B5FFF]"
+              />
+              <button
+                type="button"
+                onClick={() => void handleValidateCode()}
+                disabled={validatingCode || !task.confirmation_code}
+                className="rounded-xl bg-[#0B5FFF] px-4 py-3 font-semibold text-white disabled:opacity-60"
+              >
+                {validatingCode ? "Confirming…" : "Confirm"}
+              </button>
+            </div>
+            {validationError && <p className="mt-3 text-sm text-red-600">{validationError}</p>}
+            {task.validation_code_confirmed_by_customer && (
+              <p className="mt-3 text-sm font-medium text-green-700">✓ Validation confirmed.</p>
+            )}
+          </div>
+        )}
 
         {isOwner && task.budget != null && task.helper_id && ["assigned", "in_progress"].includes(task.status) && (
           <TaskPayment taskId={Number(task.id)} amount={Number(task.budget)} />

@@ -27,6 +27,7 @@ type TaskRow = {
   urgency: string;
   created_at: string;
   user_id: string;
+  confirmation_code?: string | null;
   task_categories?: { name: string } | { name: string }[] | null;
 };
 
@@ -103,7 +104,7 @@ export default function HelperHome() {
       const { data: tasks } = await supabase
         .from("tasks")
         .select(`
-          id, title, suburb, status, budget, urgency, created_at, user_id,
+          id, title, suburb, status, budget, urgency, created_at, user_id, confirmation_code,
           task_categories:category_id ( name )
         `)
         .eq("status", "open")
@@ -277,6 +278,11 @@ export default function HelperHome() {
                 <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
                   R{Number(activeTask.budget ?? 0).toLocaleString()}
                 </span>
+                {activeTask.confirmation_code && (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold tracking-[0.18em] text-amber-900">
+                    Code: {activeTask.confirmation_code}
+                  </span>
+                )}
                 <Link to={`/tasks/${activeTask.id}`} className="rounded-xl bg-[#0B5FFF] px-4 py-2 text-sm font-semibold text-white">
                   View details
                 </Link>
