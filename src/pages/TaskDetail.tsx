@@ -49,7 +49,54 @@ function AcceptButton({ taskId, onAccepted }: { taskId: number; onAccepted?: (co
   );
 }
 
-function CompleteButton({ taskId }: { taskId: number }) {
+async function createTaskCompletionReviewNotifications({
+  taskId,
+  taskTitle,
+  customerId,
+  helperId,
+}: {
+  taskId: number;
+  taskTitle: string;
+  customerId: string | null;
+  helperId: string | null;
+}) {
+  if (!customerId && !helperId) return;
+
+  const recipients = [
+    customerId ? { user_id: customerId, message: `Task “${taskTitle}” is complete. Please leave a quick rating for the helper.` } : null,
+    helperId ? { user_id: helperId, message: `Task “${taskTitle}” is complete. Please leave a quick rating for the customer.` } : null,
+  ].filter(Boolean) as { user_id: string; message: string }[];
+
+  if (recipients.length === 0) return;
+
+  const results = await Promise.all(
+    recipients.map((recipient) =>
+      supabase.rpc("create_task_review_notification", {
+        p_user_id: recipient.user_id,
+        p_task_id: taskId,
+        p_message: recipient.message,
+      })
+    )
+  );
+
+  for (const result of results) {
+    if (result.error) {
+      console.warn("Could not create task review notification:", result.error.message);
+    }
+  }
+}
+
+function CompleteButton({
+  taskId,
+  taskTitle,
+  customerId,
+  helperId,
+}: {
+  taskId: number;
+  taskTitle: string;
+  customerId: string | null;
+  helperId: string | null;
+}) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,9 +105,16 @@ function CompleteButton({ taskId }: { taskId: number }) {
     if (!confirm("Mark this task as completed?")) return;
     setLoading(true);
     setError(null);
-    const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
+    const { error: completeError } = await supabase.rpc("complete_task", { p_task_id: taskId });
     setLoading(false);
-    if (error) return setError(error.message);
+    if (completeError) return setError(completeError.message);
+
+    await createTaskCompletionReviewNotifications({
+      taskId,
+      taskTitle,
+      customerId,
+      helperId,
+    });
     navigate(0);
   };
 
@@ -133,11 +187,13 @@ function OwnerActions({
 
 function ReviewForm({
   taskId,
-  helperId,
+  targetUserId,
+  targetName,
   onSubmitted,
 }: {
   taskId: number;
-  helperId: string;
+  targetUserId: string;
+  targetName: string;
   onSubmitted: () => void;
 }) {
   const [rating, setRating] = useState(5);
@@ -153,7 +209,7 @@ function ReviewForm({
 
     const { error } = await supabase.from("reviews").insert({
       reviewer_id: user.id,
-      helper_id: helperId,
+      helper_id: targetUserId,
       task_id: taskId,
       rating,
       comment: comment.trim() || null,
@@ -169,9 +225,9 @@ function ReviewForm({
 
   return (
     <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900">Leave a review</h3>
+      <h3 className="text-lg font-semibold text-gray-900">Rate your experience</h3>
       <p className="mt-1 text-sm text-gray-500">
-        How did your Caddy do? Your review helps other customers.
+        How was {targetName}? Your feedback helps make the platform better for everyone.
       </p>
 
       <div className="mt-4">
@@ -199,7 +255,7 @@ function ReviewForm({
           id="comment"
           rows={4}
           className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-[#0B5FFF] focus:outline-none focus:ring-1 focus:ring-[#0B5FFF]"
-          placeholder="Tell others about your experience…"
+          placeholder="Share a quick note about their behaviour or work…"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
@@ -217,7 +273,7 @@ function ReviewForm({
         disabled={saving}
         className="mt-4 w-full rounded-xl bg-[#0B5FFF] py-3 font-semibold text-white disabled:opacity-60"
       >
-        {saving ? "Submitting…" : "Submit review"}
+        {saving ? "Submitting…" : "Submit rating"}
       </button>
     </div>
   );
@@ -323,8 +379,7 @@ export default function TaskDetail() {
   const isAssignedHelper = isHelper && currentUserId !== null && task.helper_id === currentUserId;
   const isCustomerOwner = currentUserId !== null && task.user_id === currentUserId;
   const canComplete = isAssignedHelper && task.status !== "completed" && task.status !== "cancelled";
-  const canReview = isOwner && task.status === "completed" && !!task.helper_id && !existingReview;
-  const alreadyReviewed = isOwner && task.status === "completed" && existingReview;
+  const alreadyReviewed = (isOwner || isAssignedHelper) && task.status === "completed" && existingReview;
   const validationCode = generatedValidationCode ?? task.confirmation_code ?? null;
 
   const handleValidateCode = async () => {
@@ -413,7 +468,14 @@ export default function TaskDetail() {
               }}
             />
           )}
-          {canComplete && <CompleteButton taskId={Number(task.id)} />}
+          {canComplete && (
+            <CompleteButton
+              taskId={Number(task.id)}
+              taskTitle={task.title}
+              customerId={task.user_id}
+              helperId={task.helper_id}
+            />
+          )}
           {isOwner && <OwnerActions taskId={Number(task.id)} status={task.status} onCancelled={() => setTask({ ...task, status: "cancelled" })} />}
 
           {!isHelper && task.status === "open" && !isOwner && (
@@ -471,10 +533,11 @@ export default function TaskDetail() {
           <TaskPayment taskId={Number(task.id)} amount={Number(task.budget)} />
         )}
 
-        {canReview && task.helper_id && (
+        {(isOwner || isAssignedHelper) && task.status === "completed" && !existingReview && task.helper_id && task.user_id && (
           <ReviewForm
             taskId={Number(task.id)}
-            helperId={task.helper_id}
+            targetUserId={isAssignedHelper ? task.user_id : task.helper_id}
+            targetName={isAssignedHelper ? (customerName || "the customer") : (helperName || "the helper")}
             onSubmitted={() => {
               setExistingReview(true);
               navigate(0);

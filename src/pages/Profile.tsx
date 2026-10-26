@@ -1,6 +1,7 @@
 // src/pages/Profile.tsx
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FaApplePay, FaCcMastercard, FaCcVisa, FaPaypal } from "react-icons/fa";
 import { supabase } from "../lib/supabaseClient";
 import { signOut } from "../lib/auth";
 import PhoneVerification from "../components/PhoneVerification";
@@ -49,6 +50,13 @@ function pick<T>(v: T | T[] | null | undefined): T | null {
   if (!v) return null;
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
+
+const paymentOptions = [
+  { name: "Visa", Icon: FaCcVisa },
+  { name: "Mastercard", Icon: FaCcMastercard },
+  { name: "PayPal", Icon: FaPaypal },
+  { name: "Apple Pay", Icon: FaApplePay },
+] as const;
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -240,9 +248,16 @@ export default function Profile() {
                 <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 p-5 text-white shadow-md">
                   <div className="flex items-start justify-between">
                     <span className="text-2xl">💳</span>
-                    <div className="flex gap-2">
-                      <span className="h-6 w-6 rounded-full bg-red-500" />
-                      <span className="h-6 w-6 rounded-full bg-yellow-400" />
+                    <div className="flex items-center gap-2">
+                      {paymentOptions.map(({ name, Icon }) => (
+                        <div
+                          key={name}
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20"
+                          title={name}
+                        >
+                          <Icon className="h-4 w-4 text-white" />
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <p className="mt-6 tracking-widest">
@@ -264,6 +279,13 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-center">
+                  <div className="mb-4 flex justify-center gap-3 text-gray-400">
+                    {paymentOptions.map(({ name, Icon }) => (
+                      <div key={name} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100" title={name}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    ))}
+                  </div>
                   <p className="text-sm text-gray-500">No payment method on file.</p>
                 </div>
               )}
