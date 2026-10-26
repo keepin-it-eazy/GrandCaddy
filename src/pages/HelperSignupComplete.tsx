@@ -234,6 +234,14 @@ export default function HelperSignup() {
           </p>
         </div>
 
+        {verificationStatus && !["approved", "verified"].includes(verificationStatus) && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">
+              Your Caddy application is currently under review. You will be notified once it has been approved.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6">
           <div>
             <label className={labelClass} htmlFor="fullName">
