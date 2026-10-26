@@ -16,8 +16,10 @@ import HelperSignup from './pages/HelperSignupComplete'
 import HelperHome from './pages/HelperHome'
 import HelperProfile from './pages/HelperProfile'
 import Profile from './pages/Profile'
+import AdminDashboard from './pages/AdminDashboard'
 import AdminHelperApprovals from './pages/AdminHelperApprovals'
 import AdminCustomerApprovals from './pages/AdminCustomerApprovals'
+import RequireAdmin from './components/RequireAdmin'
 import Messages from './pages/Messages'
 import MessageThread from './pages/MessageThread'
 
@@ -46,8 +48,10 @@ function App() {
         <Route path="/helper" element={protectedRoute(<HelperHome />)} />
         <Route path="/helper/signup" element={protectedRoute(<HelperSignup />)} />
         <Route path="/helper/bookings" element={protectedRoute(<MyBookings />)} />
-        <Route path="/admin/verifications" element={protectedRoute(<AdminHelperApprovals />)} />
-        <Route path="/admin/customer-verifications" element={protectedRoute(<AdminCustomerApprovals />)} />
+        <Route path="/admin" element={protectedRoute(<RequireAdmin><AdminDashboard /></RequireAdmin>)} />
+        <Route path="/admin/verifications" element={protectedRoute(<RequireAdmin><AdminHelperApprovals /></RequireAdmin>)} />
+        <Route path="/admin/helper-verifications" element={protectedRoute(<RequireAdmin><AdminHelperApprovals /></RequireAdmin>)} />
+        <Route path="/admin/customer-verifications" element={protectedRoute(<RequireAdmin><AdminCustomerApprovals /></RequireAdmin>)} />
 
         <Route path="/helpers/:id" element={<HelperProfile />} />
 

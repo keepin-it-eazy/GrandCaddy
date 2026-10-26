@@ -8,6 +8,7 @@ import { supabase } from "../../lib/supabaseClient";
 type Role = {
   isCustomer: boolean;
   isHelper: boolean;
+  isAdmin: boolean;
   signedIn: boolean;
 };
 
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [role, setRole] = useState<Role>({
     isCustomer: false,
     isHelper: false,
+    isAdmin: false,
     signedIn: false,
   });
   const [reviewAlerts, setReviewAlerts] = useState<Array<{ id: string; task_id: number | null; message: string }>>([]);
@@ -29,15 +31,17 @@ export default function Navbar() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        setRole({ isCustomer: false, isHelper: false, signedIn: false });
+        setRole({ isCustomer: false, isHelper: false, isAdmin: false, signedIn: false });
         setReviewAlerts([]);
         if (channel) { void supabase.removeChannel(channel); channel = null; }
         return;
       }
 
-      const [c, h, reviewRes] = await Promise.all([
+      const [c, h, helperAdmin, customerAdmin, reviewRes] = await Promise.all([
         supabase.from("customer_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
         supabase.from("helper_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
+        supabase.from("helper_verification_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
+        supabase.from("customer_verification_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
         supabase
           .from("inbox_entries")
           .select("id, task_id, message")
@@ -48,9 +52,14 @@ export default function Navbar() {
           .limit(5),
       ]);
 
+      const isAdmin = !!helperAdmin.data || !!customerAdmin.data;
+      const isCustomer = !!c.data && !isAdmin;
+      const isHelper = !!h.data && !isAdmin;
+
       setRole({
-        isCustomer: !!c.data,
-        isHelper: !!h.data,
+        isCustomer,
+        isHelper,
+        isAdmin,
         signedIn: true,
       });
       setReviewAlerts(reviewRes.data ?? []);
@@ -157,7 +166,13 @@ export default function Navbar() {
               </NavLink>
             )}
 
-            {role.signedIn && !role.isHelper && (
+            {role.isAdmin && (
+              <NavLink to="/admin" className={navLinkClass}>
+                Admin
+              </NavLink>
+            )}
+
+            {role.signedIn && !role.isHelper && !role.isAdmin && (
               <NavLink to="/helper/signup" className={navLinkClass}>
                 Become a Caddy
               </NavLink>
@@ -224,6 +239,18 @@ export default function Navbar() {
             <Bell size={20} className="text-gray-300" />
           )}
 
+          {role.isAdmin && (
+            <Link
+              to="/admin"
+              aria-label="Admin dashboard"
+              className="text-gray-700 hover:text-[#0B5FFF]"
+            >
+              <span className="rounded-full border border-[#0B5FFF]/20 bg-[#0B5FFF]/5 px-2.5 py-1 text-xs font-semibold text-[#0B5FFF]">
+                Admin
+              </span>
+            </Link>
+          )}
+
           <Link
             to="/profile"
             aria-label="Profile"
@@ -232,12 +259,14 @@ export default function Navbar() {
             <CircleUserRound size={22} className="cursor-pointer" />
           </Link>
 
-          <Link
-            to={role.signedIn ? "/post-task" : "/login?redirect=%2Fpost-task"}
-            className="rounded-full bg-[#0B5FFF] px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            Post a Task
-          </Link>
+          {!role.isAdmin && (
+            <Link
+              to={role.signedIn ? "/post-task" : "/login?redirect=%2Fpost-task"}
+              className="rounded-full bg-[#0B5FFF] px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Post a Task
+            </Link>
+          )}
         </div>
       </div>
     </header>
