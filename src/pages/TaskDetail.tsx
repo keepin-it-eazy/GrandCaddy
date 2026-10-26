@@ -91,13 +91,19 @@ function CompleteButton({
   taskTitle,
   customerId,
   helperId,
+  onReviewNeeded,
 }: {
   taskId: number;
   taskTitle: string;
   customerId: string | null;
   helperId: string | null;
+  onReviewNeeded: (payload: {
+    taskId: number;
+    targetUserId: string;
+    targetType: "helper" | "customer";
+    targetName: string;
+  }) => void;
 }) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,7 +121,15 @@ function CompleteButton({
       customerId,
       helperId,
     });
-    navigate(0);
+
+    if (customerId && helperId) {
+      onReviewNeeded({
+        taskId,
+        targetUserId: customerId,
+        targetType: "customer",
+        targetName: "the customer",
+      });
+    }
   };
 
   return (
@@ -284,7 +298,6 @@ function ReviewForm({
 
 export default function TaskDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [task, setTask] = useState<TaskDetailRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -296,6 +309,12 @@ export default function TaskDetail() {
   const [validationInput, setValidationInput] = useState("");
   const [validatingCode, setValidatingCode] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [pendingReviewRequest, setPendingReviewRequest] = useState<{
+    taskId: number;
+    targetUserId: string;
+    targetType: "helper" | "customer";
+    targetName: string;
+  } | null>(null);
 
   useEffect(() => {
     async function fetchTask() {
@@ -340,6 +359,32 @@ export default function TaskDetail() {
           .eq("reviewer_id", user.id)
           .maybeSingle();
         setExistingReview(!!r);
+
+        const { data: notifications } = await supabase
+          .from("inbox_entries")
+          .select("id, task_id, message, metadata")
+          .eq("user_id", user.id)
+          .eq("type", "task_review_request")
+          .eq("is_read", false)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const reviewNotification = notifications?.[0];
+        if (reviewNotification && reviewNotification.task_id) {
+          const reviewTaskId = Number(reviewNotification.task_id);
+          const targetUserId = (data as any)?.helper_id === user.id ? (data as any)?.user_id : (data as any)?.helper_id;
+          const targetType = (data as any)?.helper_id === user.id ? "customer" : "helper";
+          const targetName = (data as any)?.helper_id === user.id ? (one((data as any)?.customer)?.full_name ?? "the customer") : (one((data as any)?.helper)?.full_name ?? "the helper");
+          if (targetUserId) {
+            setPendingReviewRequest({
+              taskId: reviewTaskId,
+              targetUserId,
+              targetType,
+              targetName,
+            });
+            await supabase.from("inbox_entries").update({ is_read: true }).eq("id", reviewNotification.id);
+          }
+        }
       }
 
       setLoading(false);
@@ -477,6 +522,10 @@ export default function TaskDetail() {
               taskTitle={task.title}
               customerId={task.user_id}
               helperId={task.helper_id}
+              onReviewNeeded={(payload) => {
+                setPendingReviewRequest(payload);
+                setTask((current) => current ? { ...current, status: "completed" } : current);
+              }}
             />
           )}
           {isOwner && <OwnerActions taskId={Number(task.id)} status={task.status} onCancelled={() => setTask({ ...task, status: "cancelled" })} />}
@@ -544,7 +593,6 @@ export default function TaskDetail() {
             targetName={isAssignedHelper ? (customerName || "the customer") : (helperName || "the helper")}
             onSubmitted={() => {
               setExistingReview(true);
-              navigate(0);
             }}
           />
         )}
@@ -554,6 +602,37 @@ export default function TaskDetail() {
             <p className="text-sm text-green-700">
               ✓ Thanks — you've already reviewed this task.
             </p>
+          </div>
+        )}
+
+        {pendingReviewRequest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Leave a rating</h3>
+                  <p className="mt-1 text-sm text-gray-500">How was {pendingReviewRequest.targetName}?</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingReviewRequest(null)}
+                  className="rounded-lg px-2 py-1 text-gray-500 hover:bg-gray-100"
+                  aria-label="Close rating prompt"
+                >
+                  ✕
+                </button>
+              </div>
+              <ReviewForm
+                taskId={pendingReviewRequest.taskId}
+                targetUserId={pendingReviewRequest.targetUserId}
+                targetType={pendingReviewRequest.targetType}
+                targetName={pendingReviewRequest.targetName}
+                onSubmitted={() => {
+                  setPendingReviewRequest(null);
+                  setExistingReview(true);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
