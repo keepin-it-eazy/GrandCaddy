@@ -224,6 +224,7 @@ export default function HelperProfile() {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null;
   const isSelf = currentUserId !== null && currentUserId === id;
+  const identityApproved = helper?.verification_status === "approved" || helper?.verification_status === "verified";
 
   const openThread = async () => {
     if (!id) return;
@@ -281,10 +282,11 @@ export default function HelperProfile() {
             <div className="mt-6 space-y-3">
               <button
                 onClick={() => setShowBooking(true)}
-                disabled={isSelf}
+                disabled={isSelf || !identityApproved}
+                title={identityApproved ? undefined : "This helper is still awaiting identity approval."}
                 className="w-full rounded-xl bg-[#0B5FFF] py-3 font-semibold text-white disabled:opacity-60"
               >
-                {isSelf ? "This is you" : "Book this Caddy"}
+                {isSelf ? "This is you" : identityApproved ? "Book this Caddy" : "Awaiting approval"}
               </button>
 
               {isSelf ? (

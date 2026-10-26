@@ -16,6 +16,7 @@ import HelperSignup from './pages/HelperSignupComplete'
 import HelperHome from './pages/HelperHome'
 import HelperProfile from './pages/HelperProfile'
 import Profile from './pages/Profile'
+import AdminHelperApprovals from './pages/AdminHelperApprovals'
 import Messages from './pages/Messages'
 import MessageThread from './pages/MessageThread'
 
@@ -44,6 +45,7 @@ function App() {
         <Route path="/helper" element={protectedRoute(<HelperHome />)} />
         <Route path="/helper/signup" element={protectedRoute(<HelperSignup />)} />
         <Route path="/helper/bookings" element={protectedRoute(<MyBookings />)} />
+        <Route path="/admin/verifications" element={protectedRoute(<AdminHelperApprovals />)} />
 
         <Route path="/helpers/:id" element={<HelperProfile />} />
 

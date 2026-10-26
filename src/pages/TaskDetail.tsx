@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { StatusBadge } from "../components/TaskCard";
+import TaskPayment from "../components/TaskPayment";
 import { one, type TaskDetailRecord } from "../types/task";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -376,6 +377,10 @@ export default function TaskDetail() {
             </div>
           )}
         </div>
+
+        {isOwner && task.budget != null && task.helper_id && ["assigned", "in_progress"].includes(task.status) && (
+          <TaskPayment taskId={Number(task.id)} amount={Number(task.budget)} />
+        )}
 
         {canReview && task.helper_id && (
           <ReviewForm

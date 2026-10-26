@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import PhoneVerification from "../components/PhoneVerification";
 import { KUILS_RIVER_AREAS } from "../lib/areas";
 
 type Category = { id: string; name: string };
@@ -24,6 +25,8 @@ export default function HelperSignup() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [startingIdentityCheck, setStartingIdentityCheck] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -57,6 +60,7 @@ export default function HelperSignup() {
       if (profile) {
         setFullName(profile.full_name ?? "");
         setPhone(profile.phone ?? "");
+        setPhoneVerified(Boolean(profile.phone) && Boolean(user.phone_confirmed_at));
         setSuburb(helperProfile?.suburb ?? "");
         setBio(helperProfile?.bio ?? "");
         setHourlyRate(
@@ -85,6 +89,11 @@ export default function HelperSignup() {
 
     if (!fullName || !phone || !suburb) {
       setError("Fill in your name, phone number and suburb.");
+      return;
+    }
+
+    if (!phoneVerified) {
+      setError("Verify your phone number before saving your helper profile.");
       return;
     }
 
@@ -129,6 +138,7 @@ export default function HelperSignup() {
       bio: bio || null,
       hourly_rate: rate,
       is_available: true,
+      verification_status: "pending_verification",
     });
 
     if (helperProfileError) {
@@ -146,14 +156,52 @@ export default function HelperSignup() {
       }))
     );
 
-    setSaving(false);
-
     if (catError) {
+      setSaving(false);
       setError(catError.message);
       return;
     }
 
-    navigate("/my-bookings");
+    const { error: identityRecordError } = await supabase.from("helper_identity_checks").upsert({
+      helper_id: user.id,
+      verification_provider: "stripe_identity",
+      identity_status: "not_started",
+      approval_status: "not_submitted",
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "helper_id" });
+
+    if (identityRecordError) {
+      setSaving(false);
+      setError(identityRecordError.message);
+      return;
+    }
+
+    setSaving(false);
+
+    try {
+      setStartingIdentityCheck(true);
+      const { data, error: identitySessionError } = await supabase.functions.invoke("stripe-identity-session", {
+        body: { helper_id: user.id },
+      });
+      setStartingIdentityCheck(false);
+
+      if (identitySessionError) {
+        setError(`Profile saved, but identity verification could not start. ${identitySessionError.message}`);
+        return;
+      }
+
+      const verificationUrl = (data as { url?: string } | null)?.url;
+      if (verificationUrl) {
+        window.location.href = verificationUrl;
+        return;
+      }
+    } catch (identityStartError) {
+      setStartingIdentityCheck(false);
+      setError(identityStartError instanceof Error ? identityStartError.message : "Identity verification could not be started.");
+      return;
+    }
+
+    navigate("/helper");
   };
 
   if (loading) {
@@ -188,19 +236,13 @@ export default function HelperSignup() {
             />
           </div>
 
-          <div>
-            <label className={labelClass} htmlFor="phone">
-              Phone number
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              className={fieldClass}
-              placeholder="082 123 4567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+          <PhoneVerification
+            initialPhone={phone}
+            onVerified={(verifiedPhone) => {
+              setPhone(verifiedPhone);
+              setPhoneVerified(true);
+            }}
+          />
 
           <div>
             <label className={labelClass} htmlFor="suburb">
@@ -276,6 +318,12 @@ export default function HelperSignup() {
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-100 p-4">
               <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {startingIdentityCheck && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm text-blue-700">Starting your identity review. You will be redirected to Stripe to complete the check.</p>
             </div>
           )}
 

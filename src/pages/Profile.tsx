@@ -1,8 +1,9 @@
 // src/pages/Profile.tsx
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { signOut } from "../lib/auth";
+import PhoneVerification from "../components/PhoneVerification";
 
 type ProfileRow = {
   id: string;
@@ -65,6 +66,11 @@ export default function Profile() {
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const handlePhoneVerified = useCallback((verifiedPhone: string) => {
+    setPhone(verifiedPhone);
+    setProfile((current) => current ? { ...current, phone: verifiedPhone } : current);
+  }, []);
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -104,7 +110,7 @@ export default function Profile() {
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: fullName, phone })
+      .update({ full_name: fullName })
       .eq("id", profile.id);
     setSaving(false);
     if (error) {
@@ -206,14 +212,7 @@ export default function Profile() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Phone</label>
-              <input
-                className="w-full rounded-xl border border-gray-300 px-4 py-3"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
+            <p className="text-sm text-gray-500">Phone number changes must be verified by SMS below.</p>
             <button
               onClick={() => void handleSave()}
               disabled={saving}
@@ -224,17 +223,17 @@ export default function Profile() {
           </section>
         )}
 
+        <PhoneVerification initialPhone={phone} onVerified={handlePhoneVerified} />
+
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
           {/* LEFT: Payment methods */}
           <section className="space-y-6">
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Payment methods</h2>
-                <button className="text-sm font-semibold text-[#0B5FFF] hover:underline">
-                  + Add
-                </button>
+                <p className="mt-1 text-sm text-gray-500">Secure PayFast checkout is offered for each assigned task.</p>
               </div>
 
               {defaultCard ? (

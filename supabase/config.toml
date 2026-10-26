@@ -1,0 +1,8 @@
+[functions.payfast-itn]
+verify_jwt = false
+
+[functions.stripe-identity-session]
+verify_jwt = true
+
+[functions.stripe-identity-webhook]
+verify_jwt = false
