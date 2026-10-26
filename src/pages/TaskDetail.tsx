@@ -188,11 +188,13 @@ function OwnerActions({
 function ReviewForm({
   taskId,
   targetUserId,
+  targetType,
   targetName,
   onSubmitted,
 }: {
   taskId: number;
   targetUserId: string;
+  targetType: "helper" | "customer";
   targetName: string;
   onSubmitted: () => void;
 }) {
@@ -209,7 +211,8 @@ function ReviewForm({
 
     const { error } = await supabase.from("reviews").insert({
       reviewer_id: user.id,
-      helper_id: targetUserId,
+      helper_id: targetType === "helper" ? targetUserId : null,
+      customer_id: targetType === "customer" ? targetUserId : null,
       task_id: taskId,
       rating,
       comment: comment.trim() || null,
@@ -537,6 +540,7 @@ export default function TaskDetail() {
           <ReviewForm
             taskId={Number(task.id)}
             targetUserId={isAssignedHelper ? task.user_id : task.helper_id}
+            targetType={isAssignedHelper ? "customer" : "helper"}
             targetName={isAssignedHelper ? (customerName || "the customer") : (helperName || "the helper")}
             onSubmitted={() => {
               setExistingReview(true);

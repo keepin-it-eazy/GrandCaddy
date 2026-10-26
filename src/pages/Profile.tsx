@@ -66,6 +66,8 @@ export default function Profile() {
   const [cards, setCards] = useState<PaymentMethod[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [reviewsLeft, setReviewsLeft] = useState<ReviewRow[]>([]);
+  const [averageReceivedRating, setAverageReceivedRating] = useState<number | null>(null);
+  const [receivedReviewCount, setReceivedReviewCount] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +96,17 @@ export default function Profile() {
         supabase.from("tasks").select("id, title, status, created_at, task_categories:category_id ( name )").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
         supabase.from("reviews").select("id, rating, comment, created_at, reviewer:reviewer_id ( full_name )").eq("reviewer_id", user.id).order("created_at", { ascending: false }).limit(3),
       ]);
+
+      const ratingTarget = h.data ? "helper_id" : "customer_id";
+      const { data: receivedRatings } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq(ratingTarget, user.id);
+
+      const ratings = (receivedRatings ?? []).map((row) => Number((row as { rating: number }).rating));
+      const totalRating = ratings.reduce((sum, rating) => sum + rating, 0);
+      setAverageReceivedRating(ratings.length > 0 ? Number((totalRating / ratings.length).toFixed(1)) : null);
+      setReceivedReviewCount(ratings.length);
 
       if (p.error) {
         setError(p.error.message);
@@ -189,6 +202,10 @@ export default function Profile() {
                     {helper.suburb.toUpperCase()}
                   </span>
                 )}
+                <span className="rounded-full bg-[#FFF7DB] px-3 py-1 text-xs font-semibold text-amber-700">
+                  ★ {averageReceivedRating !== null ? averageReceivedRating.toFixed(1) : "No ratings yet"}
+                  {receivedReviewCount > 0 ? ` (${receivedReviewCount})` : ""}
+                </span>
               </div>
             </div>
             <div className="flex gap-2">
