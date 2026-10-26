@@ -51,7 +51,7 @@ export default function Footer() {
 
             <li>
               <a
-                href="mailto:info@grandcaddy.com"
+                href="mailto:info@grandcaddy.co.za"
                 className="hover:text-white"
               >
                 Contact
@@ -76,9 +76,18 @@ export default function Footer() {
         {/* Social */}
 
         <div>
-          <h3 className="mb-4 font-bold">Connect</h3>
+          <h3 className="mb-4 font-bold">Need help?</h3>
 
-          <div className="flex gap-5">
+          <ul className="space-y-2 text-sm text-gray-300">
+            <li>
+              <a href="mailto:info@grandcaddy.co.za" className="hover:text-white">info@grandcaddy.co.za</a>
+            </li>
+            <li>
+              <a href="tel:+27215550142" className="hover:text-white">+27 (0)21 555 0142</a>
+            </li>
+          </ul>
+
+          <div className="mt-5 flex gap-5">
 
             <a href="https://www.facebook.com" aria-label="Facebook" target="_blank" rel="noreferrer">
               <FaFacebook className="transition hover:text-[#0B5FFF]" />
@@ -93,7 +102,7 @@ export default function Footer() {
             </a>
 
             <a
-              href="mailto:info@grandcaddy.com"
+              href="mailto:info@grandcaddy.co.za"
               aria-label="Email"
             >
               <Mail className="transition hover:text-[#0B5FFF]" />

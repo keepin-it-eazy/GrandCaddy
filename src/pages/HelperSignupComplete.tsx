@@ -27,6 +27,10 @@ export default function HelperSignup() {
   const [loading, setLoading] = useState(true);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [startingIdentityCheck, setStartingIdentityCheck] = useState(false);
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+  const [idDocumentName, setIdDocumentName] = useState<string>("");
+  const [uploadingId, setUploadingId] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -53,7 +57,7 @@ export default function HelperSignup() {
 
       const { data: helperProfile } = await supabase
         .from("helper_profiles")
-        .select("suburb, bio, hourly_rate")
+        .select("suburb, bio, hourly_rate, verification_status")
         .eq("user_id", user.id)
         .single();
 
@@ -63,6 +67,7 @@ export default function HelperSignup() {
         setPhoneVerified(Boolean(profile.phone) && Boolean(user.phone_confirmed_at));
         setSuburb(helperProfile?.suburb ?? "");
         setBio(helperProfile?.bio ?? "");
+        setVerificationStatus(helperProfile?.verification_status ?? null);
         setHourlyRate(
           helperProfile?.hourly_rate === null || helperProfile?.hourly_rate === undefined
             ? ""
@@ -94,6 +99,11 @@ export default function HelperSignup() {
 
     if (!phoneVerified) {
       setError("Verify your phone number before saving your helper profile.");
+      return;
+    }
+
+    if (!idDocumentUrl) {
+      setError("Upload a copy of your ID before your application can be reviewed.");
       return;
     }
 
@@ -138,7 +148,7 @@ export default function HelperSignup() {
       bio: bio || null,
       hourly_rate: rate,
       is_available: true,
-      verification_status: "pending_verification",
+      verification_status: "pending_identity_review",
     });
 
     if (helperProfileError) {
@@ -165,8 +175,10 @@ export default function HelperSignup() {
     const { error: identityRecordError } = await supabase.from("helper_identity_checks").upsert({
       helper_id: user.id,
       verification_provider: "stripe_identity",
-      identity_status: "not_started",
-      approval_status: "not_submitted",
+      identity_status: "processing",
+      approval_status: "pending",
+      id_document_url: idDocumentUrl,
+      id_document_name: idDocumentName || "uploaded-id",
       updated_at: new Date().toISOString(),
     }, { onConflict: "helper_id" });
 
@@ -313,6 +325,43 @@ export default function HelperSignup() {
               value={hourlyRate}
               onChange={(e) => setHourlyRate(e.target.value)}
             />
+          </div>
+
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
+            <label className={labelClass} htmlFor="id-upload">
+              Upload your ID for admin review
+            </label>
+            <input
+              id="id-upload"
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) {
+                  setError("Please upload an ID image smaller than 5MB.");
+                  return;
+                }
+                setUploadingId(true);
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setIdDocumentUrl(String(reader.result));
+                  setIdDocumentName(file.name);
+                  setUploadingId(false);
+                  setError("");
+                };
+                reader.onerror = () => {
+                  setUploadingId(false);
+                  setError("The ID file could not be read. Please try again.");
+                };
+                reader.readAsDataURL(file);
+              }}
+              className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-full file:border-0 file:bg-[#0B5FFF] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+            />
+            {idDocumentName && (
+              <p className="mt-3 text-sm text-green-700">✓ {idDocumentName} uploaded and ready for review.</p>
+            )}
+            {uploadingId && <p className="mt-3 text-sm text-blue-700">Uploading ID…</p>}
           </div>
 
           {error && (

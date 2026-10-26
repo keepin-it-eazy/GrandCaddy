@@ -8,6 +8,8 @@ type ApprovalRow = {
   identity_status: string | null;
   approval_status: string | null;
   review_note: string | null;
+  id_document_url: string | null;
+  id_document_name: string | null;
   updated_at: string | null;
 };
 
@@ -50,7 +52,7 @@ export default function AdminHelperApprovals() {
 
       const { data: identityRows, error: identityError } = await supabase
         .from("helper_identity_checks")
-        .select("helper_id, identity_status, approval_status, review_note, updated_at")
+        .select("helper_id, identity_status, approval_status, review_note, id_document_url, id_document_name, updated_at")
         .in("approval_status", ["pending"])
         .order("updated_at", { ascending: false });
 
@@ -84,6 +86,8 @@ export default function AdminHelperApprovals() {
             identity_status: item.identity_status,
             approval_status: item.approval_status,
             review_note: item.review_note,
+            id_document_url: item.id_document_url,
+            id_document_name: item.id_document_name,
             updated_at: item.updated_at,
           };
         })
@@ -160,6 +164,14 @@ export default function AdminHelperApprovals() {
                       <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">{row.identity_status}</span>
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">{row.approval_status}</span>
                     </div>
+                    {row.id_document_url && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Uploaded ID</p>
+                        <a href={row.id_document_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm font-semibold text-[#0B5FFF] hover:underline">
+                          {row.id_document_name ?? "View identification document"}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2">

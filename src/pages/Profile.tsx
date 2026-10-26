@@ -10,6 +10,7 @@ type ProfileRow = {
   id: string;
   full_name: string | null;
   phone: string | null;
+  verification_status: string | null;
   created_at: string;
 };
 
@@ -90,7 +91,7 @@ export default function Profile() {
       }
 
       const [p, h, pm, t, rl] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, phone, created_at").eq("id", user.id).single(),
+        supabase.from("profiles").select("id, full_name, phone, verification_status, created_at").eq("id", user.id).single(),
         supabase.from("helper_profiles").select("suburb, bio, hourly_rate, is_available, verification_status").eq("user_id", user.id).maybeSingle(),
         supabase.from("payment_methods").select("id, brand, last4, exp_month, exp_year, is_default").eq("user_id", user.id).order("is_default", { ascending: false }),
         supabase.from("tasks").select("id, title, status, created_at, task_categories:category_id ( name )").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
@@ -197,6 +198,11 @@ export default function Profile() {
                     {helper.verification_status.toUpperCase()}
                   </span>
                 )}
+                {!isHelper && profile.verification_status && (
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600">
+                    {profile.verification_status.toUpperCase()}
+                  </span>
+                )}
                 {isHelper && helper?.suburb && (
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600">
                     {helper.suburb.toUpperCase()}
@@ -249,6 +255,22 @@ export default function Profile() {
         )}
 
         <PhoneVerification initialPhone={phone} onVerified={handlePhoneVerified} />
+
+        {(!isHelper && profile.verification_status && profile.verification_status !== "approved" && profile.verification_status !== "verified") && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">
+              Your verification is currently pending review. We will notify you once your account has been approved.
+            </p>
+          </div>
+        )}
+
+        {isHelper && helper?.verification_status && !["approved", "verified"].includes(helper.verification_status) && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">
+              Your Caddy application is pending review. We will update you once your profile is approved.
+            </p>
+          </div>
+        )}
 
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

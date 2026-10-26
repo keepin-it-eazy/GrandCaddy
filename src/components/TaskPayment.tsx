@@ -87,6 +87,11 @@ export default function TaskPayment({ taskId, amount }: Props) {
         )}
       </div>
 
+      {status === "paid" && (
+        <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+          Payment successful. Your booking has been paid securely and the payment is now confirmed.
+        </div>
+      )}
       {status === "pending" && (
         <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
           A payment attempt is awaiting confirmation. Resume checkout if you have not completed it, or refresh after returning from PayFast.

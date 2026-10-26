@@ -64,6 +64,7 @@ export default function HelperHome() {
   const [accepting, setAccepting] = useState<number | null>(null);
   const [completing, setCompleting] = useState<number | null>(null);
   const [openingThread, setOpeningThread] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed" | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -99,7 +100,26 @@ export default function HelperHome() {
         .order("accepted_at", { ascending: false })
         .limit(1);
 
-      setActiveBooking((bookings?.[0] as unknown as BookingRow) ?? null);
+      const active = (bookings?.[0] as unknown as BookingRow) ?? null;
+      setActiveBooking(active);
+
+      if (active) {
+        const activeTaskId = one((active.task as any) ?? null)?.id;
+        if (activeTaskId) {
+          const { data: payment } = await supabase
+            .from("task_payments")
+            .select("status")
+            .eq("task_id", activeTaskId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          setPaymentStatus((payment?.status as "pending" | "paid" | "failed" | undefined) ?? null);
+        } else {
+          setPaymentStatus(null);
+        }
+      } else {
+        setPaymentStatus(null);
+      }
 
       const { data: tasks } = await supabase
         .from("tasks")
@@ -265,6 +285,12 @@ export default function HelperHome() {
                 {activeTask.status}
               </span>
             </div>
+
+            {activeTask.status === "completed" && paymentStatus === "paid" && (
+              <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                Payment received. The customer has paid successfully for this completed job.
+              </div>
+            )}
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
