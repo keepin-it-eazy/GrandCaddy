@@ -59,6 +59,12 @@ const paymentOptions = [
   { name: "Apple Pay", Icon: FaApplePay },
 ] as const;
 
+const pendingHelperStatuses = [
+  "pending_verification",
+  "pending_identity_review",
+  "pending_approval",
+];
+
 export default function Profile() {
   const navigate = useNavigate();
 
@@ -170,6 +176,8 @@ export default function Profile() {
     .split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
 
   const isHelper = helper !== null;
+  const helperApplicationPending =
+    isHelper && pendingHelperStatuses.includes(helper.verification_status);
   const defaultCard = cards.find((c) => c.is_default) ?? cards[0] ?? null;
 
   return (
@@ -195,10 +203,10 @@ export default function Profile() {
                 </span>
                 {isHelper && helper?.verification_status && (
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600">
-                    {helper.verification_status.toUpperCase()}
+                    {helperApplicationPending ? "PENDING" : helper.verification_status.toUpperCase()}
                   </span>
                 )}
-                {!isHelper && profile.verification_status && (
+                {!isHelper && profile.verification_status && ["approved", "verified"].includes(profile.verification_status) && (
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600">
                     {profile.verification_status.toUpperCase()}
                   </span>
@@ -256,15 +264,7 @@ export default function Profile() {
 
         <PhoneVerification initialPhone={phone} onVerified={handlePhoneVerified} />
 
-        {(!isHelper && profile.verification_status && profile.verification_status !== "approved" && profile.verification_status !== "verified") && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-medium text-amber-800">
-              Your verification is currently pending review. We will notify you once your account has been approved.
-            </p>
-          </div>
-        )}
-
-        {isHelper && helper?.verification_status && !["approved", "verified"].includes(helper.verification_status) && (
+        {helperApplicationPending && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm font-medium text-amber-800">
               Your Caddy application is pending review. We will update you once your profile is approved.
