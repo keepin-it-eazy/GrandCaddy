@@ -42,6 +42,20 @@ Deno.serve(async (request) => {
       return json({ error: "Verify your email and phone before starting identity review." }, 403);
     }
 
+    const body: unknown = await request.json();
+    if (
+      !body ||
+      typeof body !== "object" ||
+      !("id_document_url" in body) ||
+      !("id_document_name" in body) ||
+      typeof body.id_document_url !== "string" ||
+      typeof body.id_document_name !== "string" ||
+      !body.id_document_url ||
+      !body.id_document_name
+    ) {
+      return json({ error: "Upload your ID before submitting your application." }, 400);
+    }
+
     const stripe = new Stripe(stripeSecret, { apiVersion: "2024-06-20" });
     const session = await stripe.identity.verificationSessions.create({
       type: "document",
@@ -69,6 +83,8 @@ Deno.serve(async (request) => {
         verification_provider: "stripe_identity",
         identity_status: "processing",
         approval_status: "pending",
+        id_document_url: body.id_document_url,
+        id_document_name: body.id_document_name,
         stripe_session_id: session.id,
         stripe_verification_id: session.id,
         updated_at: new Date().toISOString(),

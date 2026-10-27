@@ -172,33 +172,20 @@ export default function HelperSignup() {
       return;
     }
 
-    const { error: identityRecordError } = await supabase.from("helper_identity_checks").upsert({
-      helper_id: user.id,
-      verification_provider: "stripe_identity",
-      identity_status: "processing",
-      approval_status: "pending",
-      id_document_url: idDocumentUrl,
-      id_document_name: idDocumentName || "uploaded-id",
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "helper_id" });
-
-    if (identityRecordError) {
-      setSaving(false);
-      setError(identityRecordError.message);
-      return;
-    }
-
     setSaving(false);
 
     try {
       setStartingIdentityCheck(true);
       const { data, error: identitySessionError } = await supabase.functions.invoke("stripe-identity-session", {
-        body: { helper_id: user.id },
+        body: {
+          id_document_url: idDocumentUrl,
+          id_document_name: idDocumentName || "uploaded-id",
+        },
       });
       setStartingIdentityCheck(false);
 
       if (identitySessionError) {
-        setError(`Profile saved, but identity verification could not start. ${identitySessionError.message}`);
+        setError(`Your profile was saved, but your application could not be submitted for verification. ${identitySessionError.message}`);
         return;
       }
 
@@ -386,13 +373,13 @@ export default function HelperSignup() {
 
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || uploadingId || startingIdentityCheck}
             onClick={() => {
-              if (!saving) void handleSubmit();
+              if (!saving && !uploadingId && !startingIdentityCheck) void handleSubmit();
             }}
             className="w-full rounded-xl bg-[#0B5FFF] py-3 font-semibold text-white disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save profile"}
+            {saving || startingIdentityCheck ? "Submitting application…" : "Apply & wait for verification"}
           </button>
         </div>
       </div>
