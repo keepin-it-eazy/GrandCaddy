@@ -92,18 +92,27 @@ export default function HelperSignup() {
   const handleSubmit = async () => {
     setError("");
 
-    if (!fullName || !phone || !suburb) {
-      setError("Fill in your name, phone number and suburb.");
+    if (!fullName.trim()) {
+      setError("Please enter your full name.");
+      document.getElementById("fullName")?.focus();
       return;
     }
 
-    if (!phoneVerified) {
-      setError("Verify your phone number before saving your helper profile.");
+    if (!suburb.trim()) {
+      setError("Please choose the area where you work.");
+      document.getElementById("suburb")?.focus();
+      return;
+    }
+
+    if (!phoneVerified || !phone.trim()) {
+      setError("Enter your phone number and verify it using the SMS code before submitting.");
+      document.getElementById("verification-phone")?.focus();
       return;
     }
 
     if (!idDocumentUrl) {
       setError("Upload a copy of your ID before your application can be reviewed.");
+      document.getElementById("id-upload")?.focus();
       return;
     }
 
@@ -239,7 +248,10 @@ export default function HelperSignup() {
               className={fieldClass}
               placeholder="Enter your full name"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                setError("");
+              }}
             />
           </div>
 
@@ -259,7 +271,10 @@ export default function HelperSignup() {
               id="suburb"
               className={fieldClass}
               value={suburb}
-              onChange={(e) => setSuburb(e.target.value)}
+              onChange={(e) => {
+                setSuburb(e.target.value);
+                setError("");
+              }}
             >
               <option value="">Choose your area</option>
               {KUILS_RIVER_AREAS.map((area) => (
